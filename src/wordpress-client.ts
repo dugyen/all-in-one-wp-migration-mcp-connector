@@ -1,5 +1,4 @@
 import fetch, { type RequestInit, type Response } from "node-fetch";
-import FormData from "form-data";
 
 export interface BackupFile {
   id?: string;
@@ -15,61 +14,72 @@ export interface BackupFile {
 
 export interface ExportResult {
   job_id: string;
-  status: "pending" | "running" | "completed" | "failed";
+  status: "pending" | "running" | "complete" | "failed";
+  archive?: string;
   download_url?: string;
-  filename?: string;
   message?: string;
+  secret_key?: string;
 }
 
 export interface ImportResult {
   job_id: string;
-  status: "pending" | "running" | "completed" | "failed";
+  status: "awaiting_upload" | "running" | "complete" | "failed";
   message?: string;
 }
 
 export interface JobStatus {
   job_id: string;
-  type: "export" | "import";
-  status: "pending" | "running" | "complete" | "failed";
-  progress?: number;
+  type?: "export" | "import";
+  status: "awaiting_upload" | "running" | "complete" | "failed" | "confirm" | "error";
+  percent?: number;
   message?: string;
   archive?: string;
   download_url?: string;
 }
 
+export interface SiteCapabilities {
+  export: boolean;
+  import: boolean;
+  max_upload_size: number;
+  max_upload_size_human: string;
+  wordpress_version: string;
+  php_version: string;
+  plugin_version: string;
+  site_url: string;
+  available_space: number;
+  available_space_human: string;
+}
+
 export class WordPressClient {
   private readonly baseUrl: string;
   private readonly authHeader: string;
-  private readonly secretKey: string;
 
-  constructor(siteUrl: string, username: string, appPassword: string, secretKey = "") {
+  constructor(siteUrl: string, username: string, appPassword: string) {
     this.baseUrl = siteUrl.replace(/\/$/, "");
     const credentials = Buffer.from(`${username}:${appPassword.replace(/\s/g, "")}`).toString("base64");
     this.authHeader = `Basic ${credentials}`;
-    this.secretKey = secretKey;
   }
 
   private buildHeaders(extra: Record<string, string> = {}): Record<string, string> {
-    const headers: Record<string, string> = {
-      Authorization: this.authHeader,
-      ...extra,
-    };
-    if (this.secretKey) {
-      headers["X-AI1WM-SECRET"] = this.secretKey;
-    }
-    return headers;
+    return { Authorization: this.authHeader, ...extra };
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(path: string, options: RequestInit = {}, allowedFailStatus?: number): Promise<T> {
     const url = `${this.baseUrl}/wp-json/ai1wm/v1${path}`;
+    const isJson = !options.headers || !(options.headers as Record<string, string>)["Content-Type"]?.includes("octet");
     const headers = this.buildHeaders(
-      options.body instanceof FormData ? {} : { "Content-Type": "application/json" }
+      isJson && options.body ? { "Content-Type": "application/json" } : {}
     );
 
     const response: Response = await fetch(url, {
       ...options,
       headers: { ...headers, ...(options.headers as Record<string, string> | undefined ?? {}) },
     });
+
+    // 404 on the last chunk of an upload is expected — server closes endpoint after assembly
+    if (response.status === 404 && allowedFailStatus === 404) {
+      return {} as T;
+    }
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -85,38 +95,79 @@ export class WordPressClient {
     return response.json() as Promise<T>;
   }
 
-  async listBackups(): Promise<BackupFile[]> {
-    return this.request<BackupFile[]>("/backups");
+  async getCapabilities(): Promise<SiteCapabilities> {
+    return this.request<SiteCapabilities>("/capabilities");
   }
 
-  async exportBackup(options: { exclude_spam?: boolean; exclude_media?: boolean } = {}): Promise<ExportResult> {
+  async listBackups(): Promise<BackupFile[]> {
+    const result = await this.request<{ backups: BackupFile[] } | BackupFile[]>("/backups");
+    // Handle both array and {backups:[]} response shapes
+    return Array.isArray(result) ? result : (result as { backups: BackupFile[] }).backups ?? [];
+  }
+
+  async exportBackup(options: {
+    no_media?: boolean;
+    no_spam?: boolean;
+    no_post_revisions?: boolean;
+  } = {}): Promise<ExportResult> {
+    const body = Object.keys(options).length ? { options } : {};
     return this.request<ExportResult>("/exports", {
       method: "POST",
-      body: JSON.stringify(options),
+      body: JSON.stringify(body),
     });
   }
 
-  async importBackup(fileUrl: string): Promise<ImportResult> {
-    return this.request<ImportResult>("/imports", {
-      method: "POST",
-      body: JSON.stringify({ url: fileUrl }),
-    });
-  }
-
-  async getExportStatus(jobId: string): Promise<JobStatus> {
+  async pollExportStatus(jobId: string): Promise<JobStatus> {
     return this.request<JobStatus>(`/exports/${jobId}`);
   }
 
-  async getImportStatus(jobId: string): Promise<JobStatus> {
+  /**
+   * Start an import job and upload the file in chunks via raw binary POST.
+   * The correct endpoint is /imports/{job_id} (not /file).
+   * The last chunk returns 404 — this is expected (server closes endpoint after assembly).
+   */
+  async startImport(): Promise<ImportResult> {
+    return this.request<ImportResult>("/imports", { method: "POST", body: JSON.stringify({}) });
+  }
+
+  async uploadChunk(
+    jobId: string,
+    chunk: Buffer,
+    offset: number,
+    totalSize: number
+  ): Promise<JobStatus> {
+    const end = offset + chunk.length - 1;
+    return this.request<JobStatus>(
+      `/imports/${jobId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Range": `bytes ${offset}-${end}/${totalSize}`,
+        },
+        body: chunk,
+      },
+      // 404 on the final chunk is expected — server seals the upload
+      end === totalSize - 1 ? 404 : undefined
+    );
+  }
+
+  async pollImportStatus(jobId: string): Promise<JobStatus> {
     return this.request<JobStatus>(`/imports/${jobId}`);
   }
 
+  async confirmImport(jobId: string): Promise<JobStatus> {
+    return this.request<JobStatus>(`/imports/${jobId}/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ proceed: true }),
+    });
+  }
+
   async getJobStatus(jobId: string): Promise<JobStatus> {
-    // Try export status first, fall back to import status
     try {
-      return await this.getExportStatus(jobId);
+      return await this.pollExportStatus(jobId);
     } catch {
-      return this.getImportStatus(jobId);
+      return this.pollImportStatus(jobId);
     }
   }
 
