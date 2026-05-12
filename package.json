@@ -1,0 +1,48 @@
+{
+  "name": "@servmask/all-in-one-wp-migration-mcp-connector",
+  "version": "1.0.0",
+  "description": "MCP Connector for All-in-One WP Migration — manage WordPress backups through Claude AI",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ai1wm-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example",
+    "claude-desktop-config.example.json"
+  ],
+  "keywords": [
+    "mcp",
+    "wordpress",
+    "backup",
+    "all-in-one-wp-migration",
+    "claude",
+    "ai"
+  ],
+  "author": "ServMask",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "form-data": "^4.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
