@@ -25,7 +25,7 @@ Claude AI  ──►  MCP Connector  ──►  All-in-One WP Migration REST API
 
 ```bash
 # Run directly with npx (recommended — no global install needed)
-npx @servmask/all-in-one-wp-migration-mcp-connector
+npx @dugyen/all-in-one-wp-migration-mcp-connector
 
 # Or install globally
 npm install -g @servmask/all-in-one-wp-migration-mcp-connector

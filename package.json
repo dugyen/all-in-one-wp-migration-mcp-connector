@@ -1,5 +1,5 @@
 {
-  "name": "@servmask/all-in-one-wp-migration-mcp-connector",
+  "name": "@dugyen/all-in-one-wp-migration-mcp-connector",
   "version": "1.0.0",
   "description": "MCP Connector for All-in-One WP Migration — manage WordPress backups through Claude AI",
   "type": "module",
