@@ -1,6 +1,6 @@
 {
   "name": "all-in-one-wp-migration-mcp-connector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP Connector for All-in-One WP Migration — manage WordPress backups through Claude AI",
   "type": "module",
   "main": "dist/index.js",

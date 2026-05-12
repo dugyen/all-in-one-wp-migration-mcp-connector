@@ -2,12 +2,15 @@ import fetch, { type RequestInit, type Response } from "node-fetch";
 import FormData from "form-data";
 
 export interface BackupFile {
-  id: string;
+  id?: string;
   name: string;
   size: number;
+  size_human?: string;
   created_at: string;
-  type: string;
-  url?: string;
+  type?: string;
+  label?: string;
+  downloadable?: boolean;
+  download_url?: string;
 }
 
 export interface ExportResult {
@@ -27,9 +30,10 @@ export interface ImportResult {
 export interface JobStatus {
   job_id: string;
   type: "export" | "import";
-  status: "pending" | "running" | "completed" | "failed";
+  status: "pending" | "running" | "complete" | "failed";
   progress?: number;
   message?: string;
+  archive?: string;
   download_url?: string;
 }
 
@@ -100,11 +104,11 @@ export class WordPressClient {
   }
 
   async getExportStatus(jobId: string): Promise<JobStatus> {
-    return this.request<JobStatus>(`/exports/${jobId}/status`);
+    return this.request<JobStatus>(`/exports/${jobId}`);
   }
 
   async getImportStatus(jobId: string): Promise<JobStatus> {
-    return this.request<JobStatus>(`/imports/${jobId}/status`);
+    return this.request<JobStatus>(`/imports/${jobId}`);
   }
 
   async getJobStatus(jobId: string): Promise<JobStatus> {

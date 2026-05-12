@@ -119,8 +119,8 @@ async function handleListBackups(client: WordPressClient): Promise<string> {
 
   const lines = sorted.map((b, i) => {
     const date = new Date(b.created_at).toLocaleString();
-    const size = client.formatBytes(b.size);
-    return `${i + 1}. ${b.name}\n   Size: ${size} | Created: ${date} | Type: ${b.type}${b.url ? `\n   URL: ${b.url}` : ""}`;
+    const size = b.size_human ?? client.formatBytes(b.size);
+    return `${i + 1}. ${b.name}\n   Size: ${size} | Created: ${date}${b.download_url ? `\n   Download: ${b.download_url}` : ""}`;
   });
 
   return `Found ${backups.length} backup(s):\n\n${lines.join("\n\n")}`;
@@ -194,15 +194,14 @@ async function handleGetBackupStatus(
 
   const lines = [
     `Job ID: ${status.job_id}`,
-    `Type: ${status.type}`,
     `Status: ${status.status}`,
   ];
 
   if (status.progress !== undefined) {
     lines.push(`Progress: ${status.progress}%`);
   }
-  if (status.message) {
-    lines.push(`Message: ${status.message}`);
+  if (status.archive) {
+    lines.push(`Backup file: ${status.archive}`);
   }
   if (status.download_url) {
     lines.push(`Download URL: ${status.download_url}`);
