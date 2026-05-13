@@ -116,6 +116,7 @@ export class WordPressClient {
     no_inactive_plugins?: boolean;
     no_inactive_themes?: boolean;
     no_security?: boolean;
+    no_must_use_plugins?: boolean;
   } = {}): Promise<ExportResult> {
     // Strip undefined values so only explicitly set options are sent
     const filtered = Object.fromEntries(

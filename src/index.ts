@@ -52,8 +52,9 @@ const TOOLS: Tool[] = [
         no_plugins:          { type: "boolean", description: "Exclude all plugins." },
         no_themes:           { type: "boolean", description: "Exclude all themes." },
         no_inactive_plugins: { type: "boolean", description: "Exclude inactive plugins." },
-        no_inactive_themes:  { type: "boolean", description: "Exclude inactive themes." },
-        no_security:         { type: "boolean", description: "Exclude security options (passwords, keys, credentials)." },
+        no_inactive_themes:   { type: "boolean", description: "Exclude inactive themes." },
+        no_security:          { type: "boolean", description: "Exclude security options (passwords, keys, credentials)." },
+        no_must_use_plugins:  { type: "boolean", description: "Exclude must-use plugins (mu-plugins)." },
       },
       required: [],
     },
@@ -145,6 +146,7 @@ interface ExportArgs {
   no_inactive_plugins?: boolean;
   no_inactive_themes?: boolean;
   no_security?: boolean;
+  no_must_use_plugins?: boolean;
 }
 
 async function handleExportBackup(
@@ -159,9 +161,10 @@ async function handleExportBackup(
     no_database:         args.no_database,
     no_plugins:          args.no_plugins,
     no_themes:           args.no_themes,
-    no_inactive_plugins: args.no_inactive_plugins,
-    no_inactive_themes:  args.no_inactive_themes,
-    no_security:         args.no_security,
+    no_inactive_plugins:  args.no_inactive_plugins,
+    no_inactive_themes:   args.no_inactive_themes,
+    no_security:          args.no_security,
+    no_must_use_plugins:  args.no_must_use_plugins,
   });
 
   const lines = [
