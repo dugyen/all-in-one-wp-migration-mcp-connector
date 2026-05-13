@@ -39,14 +39,21 @@ const TOOLS: Tool[] = [
     name: "export_backup",
     description:
       "Trigger a full site export (backup) using All-in-One WP Migration. " +
-      "Optionally exclude media files, spam comments, or post revisions to reduce backup size. " +
+      "Optionally exclude specific content to reduce backup size. " +
       "Returns a job ID — poll get_backup_status until status is 'complete' to get the download URL.",
     inputSchema: {
       type: "object",
       properties: {
-        no_media: { type: "boolean", description: "Exclude media files (default: false)." },
-        no_spam: { type: "boolean", description: "Exclude spam comments (default: false)." },
-        no_post_revisions: { type: "boolean", description: "Exclude post revisions (default: false)." },
+        no_media:            { type: "boolean", description: "Exclude media library files." },
+        no_spam:             { type: "boolean", description: "Exclude spam comments." },
+        no_post_revisions:   { type: "boolean", description: "Exclude post revisions." },
+        no_cache:            { type: "boolean", description: "Exclude cache files." },
+        no_database:         { type: "boolean", description: "Exclude the database." },
+        no_plugins:          { type: "boolean", description: "Exclude all plugins." },
+        no_themes:           { type: "boolean", description: "Exclude all themes." },
+        no_inactive_plugins: { type: "boolean", description: "Exclude inactive plugins." },
+        no_inactive_themes:  { type: "boolean", description: "Exclude inactive themes." },
+        no_security:         { type: "boolean", description: "Exclude security options (passwords, keys, credentials)." },
       },
       required: [],
     },
@@ -127,14 +134,34 @@ async function handleListBackups(client: WordPressClient): Promise<string> {
   return `Found ${backups.length} backup(s) — most recent first:\n\n${lines.join("\n\n")}`;
 }
 
+interface ExportArgs {
+  no_media?: boolean;
+  no_spam?: boolean;
+  no_post_revisions?: boolean;
+  no_cache?: boolean;
+  no_database?: boolean;
+  no_plugins?: boolean;
+  no_themes?: boolean;
+  no_inactive_plugins?: boolean;
+  no_inactive_themes?: boolean;
+  no_security?: boolean;
+}
+
 async function handleExportBackup(
   client: WordPressClient,
-  args: { no_media?: boolean; no_spam?: boolean; no_post_revisions?: boolean }
+  args: ExportArgs
 ): Promise<string> {
   const result = await client.exportBackup({
-    no_media: args.no_media,
-    no_spam: args.no_spam,
-    no_post_revisions: args.no_post_revisions,
+    no_media:            args.no_media,
+    no_spam:             args.no_spam,
+    no_post_revisions:   args.no_post_revisions,
+    no_cache:            args.no_cache,
+    no_database:         args.no_database,
+    no_plugins:          args.no_plugins,
+    no_themes:           args.no_themes,
+    no_inactive_plugins: args.no_inactive_plugins,
+    no_inactive_themes:  args.no_inactive_themes,
+    no_security:         args.no_security,
   });
 
   const lines = [
@@ -240,10 +267,7 @@ async function main() {
           result = await handleListBackups(client);
           break;
         case "export_backup":
-          result = await handleExportBackup(
-            client,
-            (args ?? {}) as { no_media?: boolean; no_spam?: boolean; no_post_revisions?: boolean }
-          );
+          result = await handleExportBackup(client, (args ?? {}) as ExportArgs);
           break;
         case "import_backup":
           result = await handleImportBackup(client, args as { file_url: string });

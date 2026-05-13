@@ -109,8 +109,19 @@ export class WordPressClient {
     no_media?: boolean;
     no_spam?: boolean;
     no_post_revisions?: boolean;
+    no_cache?: boolean;
+    no_database?: boolean;
+    no_plugins?: boolean;
+    no_themes?: boolean;
+    no_inactive_plugins?: boolean;
+    no_inactive_themes?: boolean;
+    no_security?: boolean;
   } = {}): Promise<ExportResult> {
-    const body = Object.keys(options).length ? { options } : {};
+    // Strip undefined values so only explicitly set options are sent
+    const filtered = Object.fromEntries(
+      Object.entries(options).filter(([, v]) => v !== undefined)
+    );
+    const body = Object.keys(filtered).length ? { options: filtered } : {};
     return this.request<ExportResult>("/exports", {
       method: "POST",
       body: JSON.stringify(body),
