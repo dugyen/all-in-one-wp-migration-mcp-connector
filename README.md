@@ -1,4 +1,4 @@
-# All-in-One WP Migration MCP Connector
+# All-in-One WP Migration for REST API MCP
 
 Manage WordPress backups through Claude AI using the [Model Context Protocol](https://modelcontextprotocol.io/). Works with **any WordPress site** that has the [All-in-One WP Migration](https://servmask.com/) plugin installed and activated — regardless of hosting provider.
 
@@ -25,10 +25,10 @@ Claude AI  ──►  MCP Connector  ──►  All-in-One WP Migration REST API
 
 ```bash
 # Run directly with npx (recommended — no global install needed)
-npx all-in-one-wp-migration-mcp-connector
+npx all-in-one-wp-migration-rest-api-mcp
 
 # Or install globally
-npm install -g @servmask/all-in-one-wp-migration-mcp-connector
+npm install -g all-in-one-wp-migration-rest-api-mcp
 ```
 
 ### 2. Generate a WordPress Application Password
@@ -51,7 +51,7 @@ Add this block to your Claude Desktop config file:
   "mcpServers": {
     "all-in-one-wp-migration": {
       "command": "npx",
-      "args": ["-y", "@servmask/all-in-one-wp-migration-mcp-connector"],
+      "args": ["-y", "all-in-one-wp-migration-rest-api-mcp"],
       "env": {
         "WP_SITE_URL": "https://your-wordpress-site.com",
         "WP_USERNAME": "your_admin_username",
@@ -71,7 +71,7 @@ claude mcp add all-in-one-wp-migration \
   --env WP_SITE_URL=https://your-wordpress-site.com \
   --env WP_USERNAME=your_admin_username \
   --env "WP_APPLICATION_PASSWORD=xxxx xxxx xxxx xxxx xxxx xxxx" \
-  -- npx -y @servmask/all-in-one-wp-migration-mcp-connector
+  -- npx -y all-in-one-wp-migration-rest-api-mcp
 ```
 
 ---
@@ -93,17 +93,41 @@ claude mcp add all-in-one-wp-migration \
 
 > *"Export a backup of my site, but skip the media files."*
 
+> *"Export a backup of my site and encrypt it with password: mypassword"*
+
 > *"Import the backup from last Tuesday."*
 
 > *"Is my backup export complete yet? The job ID is abc123."*
+
+> *"Delete backup filename.wpress from my WordPress site."*
+
+---
+
+## Export Options
+
+You can exclude specific content to reduce backup size:
+
+| Option | Description |
+|---|---|
+| `no_media` | Exclude media library files |
+| `no_spam` | Exclude spam comments |
+| `no_post_revisions` | Exclude post revisions |
+| `no_cache` | Exclude cache files |
+| `no_database` | Exclude the database |
+| `no_plugins` | Exclude all plugins |
+| `no_themes` | Exclude all themes |
+| `no_inactive_plugins` | Exclude inactive plugins |
+| `no_inactive_themes` | Exclude inactive themes |
+| `no_security` | Exclude security options (passwords, keys, credentials) |
+| `no_must_use_plugins` | Exclude must-use plugins (mu-plugins) |
 
 ---
 
 ## Running Locally (Development)
 
 ```bash
-git clone https://github.com/your-org/all-in-one-wp-migration-mcp-connector.git
-cd all-in-one-wp-migration-mcp-connector
+git clone https://github.com/dugyen/all-in-one-wp-migration-rest-api-mcp.git
+cd all-in-one-wp-migration-rest-api-mcp
 
 npm install
 
@@ -125,7 +149,6 @@ npm run build && npm start
 | `WP_SITE_URL` | Yes | Full URL of your WordPress site (no trailing slash) |
 | `WP_USERNAME` | Yes | WordPress admin username |
 | `WP_APPLICATION_PASSWORD` | Yes | WordPress Application Password (spaces are stripped automatically) |
-| `AI1WM_SECRET_KEY` | No | Optional secret key for additional API security |
 
 ---
 
@@ -139,7 +162,7 @@ npm run build && npm start
                  │ MCP Protocol (stdio)
 ┌────────────────▼────────────────────┐
 │   All-in-One WP Migration           │
-│        MCP Connector                │
+│      for REST API MCP               │
 │  ┌──────────────────────────────┐   │
 │  │  Tool Definitions            │   │
 │  │  Authentication Handler      │   │
@@ -170,7 +193,6 @@ npm run build && npm start
 - [ ] Export to cloud storage (Google Drive, Dropbox, Amazon S3)
 - [ ] Scheduled backup management
 - [ ] Multi-site support
-- [ ] Backup encryption settings
 - [ ] Restore to staging environment
 
 ---
@@ -183,6 +205,5 @@ npm run build && npm start
 
 ## Acknowledgements
 
-- Inspired by the [WordPress.com MCP Connector](https://developer.wordpress.com/mcp/)
 - Built on top of [All-in-One WP Migration](https://servmask.com/) by ServMask
 - Powered by [Claude AI](https://claude.ai) and the [Model Context Protocol](https://modelcontextprotocol.io/)

@@ -255,7 +255,7 @@ async function main() {
   const client = new WordPressClient(config.siteUrl, config.username, config.appPassword);
 
   const server = new Server(
-    { name: "all-in-one-wp-migration-mcp-connector", version: "1.1.0" },
+    { name: "all-in-one-wp-migration-rest-api-mcp", version: "1.3.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -290,7 +290,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  process.stderr.write("All-in-One WP Migration MCP Connector running\n");
+  process.stderr.write("All-in-One WP Migration REST API MCP running\n");
 }
 
 main().catch((err) => {
