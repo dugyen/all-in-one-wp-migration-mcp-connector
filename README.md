@@ -84,6 +84,7 @@ claude mcp add all-in-one-wp-migration \
 | `export_backup` | Trigger a full site export; returns a job ID and download URL |
 | `import_backup` | Restore a site from a `.wpress` file URL |
 | `get_backup_status` | Check progress of an ongoing export or import |
+| `delete_backup` | Permanently delete a backup file by filename |
 
 ---
 
