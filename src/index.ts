@@ -91,6 +91,23 @@ const TOOLS: Tool[] = [
       required: ["job_id"],
     },
   },
+  {
+    name: "delete_backup",
+    description:
+      "Permanently delete a backup file from the WordPress site. " +
+      "Use list_backups to get the exact filename before deleting. " +
+      "WARNING: This action is irreversible.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        filename: {
+          type: "string",
+          description: "Exact filename of the backup to delete (e.g. my-site-20260515-123456-abc123.wpress).",
+        },
+      },
+      required: ["filename"],
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -247,6 +264,17 @@ async function handleGetBackupStatus(
   return lines.join("\n");
 }
 
+async function handleDeleteBackup(
+  client: WordPressClient,
+  args: { filename: string }
+): Promise<string> {
+  if (!args.filename?.trim()) {
+    throw new Error("filename is required. Use list_backups to get the exact filename.");
+  }
+  await client.deleteBackup(args.filename.trim());
+  return `Backup "${args.filename}" has been permanently deleted from your WordPress site.`;
+}
+
 // ---------------------------------------------------------------------------
 // Server setup
 // ---------------------------------------------------------------------------
@@ -255,7 +283,7 @@ async function main() {
   const client = new WordPressClient(config.siteUrl, config.username, config.appPassword);
 
   const server = new Server(
-    { name: "all-in-one-wp-migration-rest-api-mcp", version: "1.3.0" },
+    { name: "all-in-one-wp-migration-rest-api-mcp", version: "1.4.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -277,6 +305,9 @@ async function main() {
           break;
         case "get_backup_status":
           result = await handleGetBackupStatus(client, args as { job_id: string });
+          break;
+        case "delete_backup":
+          result = await handleDeleteBackup(client, args as { filename: string });
           break;
         default:
           throw new Error(`Unknown tool: ${name}`);
